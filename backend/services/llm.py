@@ -17,14 +17,20 @@ Your goal is to help students understand data structures and algorithms problems
 Never give the full solution immediately — first ask what they've tried, give hints, and guide them to the answer.
 """
 
-def generate_chat_reply(message: str, history: list[dict]) -> dict:
+def generate_chat_reply(message: str, history: list[dict], context_chunks: list[str] = None) -> dict:
     """
     Calls the OpenAI API to generate a reply.
     history should be a list of dicts like [{"role": "user", "content": "..."}]
     Returns a dict like {"reply": "..."} or {"error": "..."} gracefully.
     """
     try:
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        system_content = SYSTEM_PROMPT
+        if context_chunks:
+            system_content += "\n\nUse the following reference material if relevant to help answer the user's question:\n"
+            for i, chunk in enumerate(context_chunks):
+                system_content += f"\n--- Reference {i+1} ---\n{chunk}\n"
+                
+        messages = [{"role": "system", "content": system_content}]
         
         # append history
         messages.extend(history)

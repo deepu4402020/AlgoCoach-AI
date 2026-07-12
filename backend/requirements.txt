@@ -3,3 +3,8 @@ uvicorn
 openai
 pydantic
 python-dotenv
+chromadb
+sentence-transformers
+rank_bm25
+langgraph
+langchain-core

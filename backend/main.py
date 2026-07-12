@@ -18,3 +18,8 @@ app.include_router(chat.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to AlgoCoach AI Backend!"}
+
+@app.get("/debug/last-route")
+def get_last_route():
+    from routers.chat import LAST_ROUTE
+    return {"last_route": LAST_ROUTE}
