@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, BarChart2, LogOut } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -13,6 +14,7 @@ type Message = {
 };
 
 export default function ChatPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -28,6 +30,18 @@ export default function ChatPage() {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      router.push("/login");
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -52,9 +66,16 @@ export default function ChatPage() {
         },
         body: JSON.stringify({
           message: userMessage,
-          history: messages, // Send previous history
+          history: messages,
         }),
+        credentials: "include",
       });
+
+      if (response.status === 401) {
+        // Unauthorized, redirect to login
+        router.push("/login");
+        return;
+      }
 
       const data = await response.json();
       
@@ -82,9 +103,19 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto p-4 md:p-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">AlgoCoach AI</h1>
-        <p className="text-muted-foreground mt-1">Your friendly DSA tutor</p>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">AlgoCoach AI</h1>
+          <p className="text-muted-foreground mt-1">Your friendly DSA tutor</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/progress")}>
+            <BarChart2 className="w-4 h-4 mr-2" /> Progress
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-2" /> Logout
+          </Button>
+        </div>
       </header>
 
       <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border shadow-sm">
