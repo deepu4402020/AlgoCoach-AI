@@ -8,3 +8,9 @@ sentence-transformers
 rank_bm25
 langgraph
 langchain-core
+sqlalchemy
+aiosqlite
+passlib
+bcrypt
+pyjwt
+python-multipart

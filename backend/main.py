@@ -1,8 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import chat
+from contextlib import asynccontextmanager
+from database import engine, Base
+import models
 
-app = FastAPI(title="AlgoCoach AI Backend")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+app = FastAPI(title="AlgoCoach AI Backend", lifespan=lifespan)
 
 # Allow frontend to communicate with backend
 app.add_middleware(
