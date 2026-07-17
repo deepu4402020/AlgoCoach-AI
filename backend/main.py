@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat
+from routers import chat, auth, progress
 from contextlib import asynccontextmanager
 from database import engine, Base
 import models
@@ -22,7 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(progress.router)
 
 @app.get("/")
 def read_root():
