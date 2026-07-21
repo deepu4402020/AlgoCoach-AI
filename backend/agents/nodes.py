@@ -1,8 +1,12 @@
 import json
+import time
+import logging
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from services.llm import get_openai_client
 from services.retriever import retrieve
 from agents.state import CoachState
+
+logger = logging.getLogger(__name__)
 
 def supervisor_node(state: CoachState) -> dict:
     """
@@ -47,7 +51,9 @@ Respond with ONLY the label, nothing else.
             route = "general_chat"
     except Exception:
         route = "general_chat"
+        route = "general_chat"
         
+    logger.info(f"supervisor_node routed to: {route}")
     return {"route": route}
 
 def concept_node(state: CoachState) -> dict:
@@ -72,11 +78,14 @@ def concept_node(state: CoachState) -> dict:
         elif isinstance(msg, AIMessage):
             openai_msgs.append({"role": "assistant", "content": msg.content})
             
+    start_time = time.time()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=openai_msgs,
         temperature=0.7
     )
+    llm_latency = time.time() - start_time
+    logger.info(f"concept_node handled question with LLM latency {llm_latency:.2f}s")
     
     reply = response.choices[0].message.content
     return {
@@ -113,11 +122,14 @@ def hint_node(state: CoachState) -> dict:
         elif isinstance(msg, AIMessage):
             openai_msgs.append({"role": "assistant", "content": msg.content})
             
+    start_time = time.time()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=openai_msgs,
         temperature=0.7
     )
+    llm_latency = time.time() - start_time
+    logger.info(f"hint_node provided hint_level {current_level} with LLM latency {llm_latency:.2f}s")
     
     reply = response.choices[0].message.content
     
@@ -147,11 +159,14 @@ Keep it encouraging. DO NOT rewrite their entire solution for them."""
         elif isinstance(msg, AIMessage):
             openai_msgs.append({"role": "assistant", "content": msg.content})
             
+    start_time = time.time()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=openai_msgs,
         temperature=0.5
     )
+    llm_latency = time.time() - start_time
+    logger.info(f"review_node completed review with LLM latency {llm_latency:.2f}s")
     
     reply = response.choices[0].message.content
     return {
@@ -173,11 +188,14 @@ def general_node(state: CoachState) -> dict:
         elif isinstance(msg, AIMessage):
             openai_msgs.append({"role": "assistant", "content": msg.content})
             
+    start_time = time.time()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=openai_msgs,
         temperature=0.7
     )
+    llm_latency = time.time() - start_time
+    logger.info(f"general_node handled chat with LLM latency {llm_latency:.2f}s")
     
     reply = response.choices[0].message.content
     return {

@@ -10,6 +10,9 @@ from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -93,9 +96,7 @@ async def chat_endpoint(request: ChatRequest, current_user: User = Depends(get_c
                 await db.commit()
                 
         except Exception as e:
-            print(f"Error in chat endpoint: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error in chat endpoint: {e}", exc_info=True)
             yield f"data: {json.dumps({'error': 'Oops! AlgoCoach is having trouble connecting to its brain right now. Please try again later.'})}\n\n"
             
     return StreamingResponse(event_generator(), media_type="text/event-stream")

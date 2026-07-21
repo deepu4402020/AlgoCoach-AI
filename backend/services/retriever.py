@@ -1,7 +1,11 @@
 import os
+import time
+import logging
 import chromadb
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
+
+logger = logging.getLogger(__name__)
 
 # Configuration
 CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
@@ -63,6 +67,8 @@ def retrieve(query: str, k: int = 5) -> list[str]:
     if collection is None or not chunk_documents:
         return [] # Still not initialized, likely no data
         
+    start_time = time.time()
+    
     # 1. Dense Retrieval (ChromaDB)
     query_embedding = embedding_model.encode(query).tolist()
     dense_results = collection.query(
@@ -114,5 +120,8 @@ def retrieve(query: str, k: int = 5) -> list[str]:
     
     # Return final top k
     top_chunks = [doc for doc, score in reranked_results[:k]]
+    
+    retrieval_latency = time.time() - start_time
+    logger.info(f"retrieval completed with latency {retrieval_latency:.2f}s")
     
     return top_chunks

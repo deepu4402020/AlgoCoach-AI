@@ -4,12 +4,23 @@ from routers import chat, auth, progress
 from contextlib import asynccontextmanager
 from database import engine, Base
 import models
+import logging
+
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting up AlgoCoach AI Backend")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
+    logger.info("Shutting down AlgoCoach AI Backend")
 
 app = FastAPI(title="AlgoCoach AI Backend", lifespan=lifespan)
 
