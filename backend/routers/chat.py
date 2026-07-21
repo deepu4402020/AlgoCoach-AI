@@ -51,7 +51,7 @@ def infer_pattern(text: str) -> str:
 async def chat_endpoint(request: ChatRequest, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     global LAST_ROUTE
     
-    config = {"configurable": {"thread_id": current_user.id}}
+    config = {"configurable": {"thread_id": current_user.id}, "recursion_limit": 5}
     input_message = HumanMessage(content=request.message)
     
     async def event_generator():
