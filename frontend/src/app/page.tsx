@@ -77,18 +77,54 @@ export default function ChatPage() {
         return;
       }
 
-      const data = await response.json();
-      
-      if (data.error) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: `Error: ${data.error}` },
-        ]);
-      } else if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.reply },
-        ]);
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let isFirstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              if (isFirstChunk) {
+                setIsLoading(false);
+                isFirstChunk = false;
+                if (data.error) {
+                    setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${data.error}` }]);
+                } else if (data.reply !== undefined) {
+                    setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+                }
+              } else {
+                if (data.error) {
+                    setMessages((prev) => {
+                        const updated = [...prev];
+                        updated[updated.length - 1].content = `Error: ${data.error}`;
+                        return updated;
+                    });
+                } else if (data.reply !== undefined) {
+                    setMessages((prev) => {
+                        const updated = [...prev];
+                        updated[updated.length - 1].content = data.reply;
+                        return updated;
+                    });
+                }
+              }
+            } catch (e) {
+                console.error("Error parsing chunk", e);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Error communicating with AlgoCoach:", error);
