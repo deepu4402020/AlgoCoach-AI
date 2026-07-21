@@ -1,23 +1,25 @@
 import os
 import chromadb
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 
 # Configuration
 CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
 COLLECTION_NAME = "dsa_patterns"
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 RRF_K = 60
 
 # We will initialize these lazily or at startup
 chroma_client = None
 collection = None
 embedding_model = None
+reranker_model = None
 bm25 = None
 chunk_documents = [] # To map index from BM25 to actual text
 
 def init_retriever():
-    global chroma_client, collection, embedding_model, bm25, chunk_documents
+    global chroma_client, collection, embedding_model, reranker_model, bm25, chunk_documents
     
     if collection is not None:
         return # Already initialized
@@ -32,6 +34,9 @@ def init_retriever():
         
     print(f"Loading embedding model '{EMBEDDING_MODEL_NAME}'...")
     embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    
+    print(f"Loading reranker model '{RERANKER_MODEL_NAME}'...")
+    reranker_model = CrossEncoder(RERANKER_MODEL_NAME)
     
     print("Building BM25 index from ChromaDB documents...")
     # Fetch all documents to build the BM25 index
@@ -92,8 +97,22 @@ def retrieve(query: str, k: int = 5) -> list[str]:
             rrf_scores[doc] = 0.0
         rrf_scores[doc] += 1.0 / (rank + 1 + RRF_K)
         
-    # 4. Sort and return top k
+    # 4. Sort fused results (get top 20 candidates for reranking)
     sorted_fused_results = sorted(rrf_scores.items(), key=lambda item: item[1], reverse=True)
-    top_chunks = [doc for doc, score in sorted_fused_results[:k]]
+    top_candidates = [doc for doc, score in sorted_fused_results[:20]]
+    
+    if not top_candidates:
+        return []
+        
+    # 5. Rerank top candidates using cross-encoder
+    # The cross-encoder takes pairs of (query, document)
+    pairs = [[query, doc] for doc in top_candidates]
+    rerank_scores = reranker_model.predict(pairs)
+    
+    # Sort candidates by rerank scores
+    reranked_results = sorted(zip(top_candidates, rerank_scores), key=lambda x: x[1], reverse=True)
+    
+    # Return final top k
+    top_chunks = [doc for doc, score in reranked_results[:k]]
     
     return top_chunks
