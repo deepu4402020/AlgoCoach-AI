@@ -1,0 +1,447 @@
+2026-07-21 13:02:03,369 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:03:20,386 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:03:44,606 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:07:00,861 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:07:18,629 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2026-07-21 13:07:29,755 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2026-07-21 13:11:57,415 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2026-07-21 13:15:57,801 - main - INFO - Shutting down AlgoCoach AI Backend
+2026-07-21 13:16:03,190 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:18:39,492 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:18:39,494 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:18:39,877 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:18:39,880 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id 'e4f35d64-bcc9-e1b5-3479-fce1326c4d5a'
+2026-07-21 13:21:04,552 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:04,557 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:21:04,960 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:04,962 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id '0dccdf9f-bf24-0f86-53bb-05bd49385bf6'
+2026-07-21 13:21:11,010 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:11,011 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:21:11,465 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:11,467 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id '04e22efa-c1e3-ba0f-df4f-299d396c5c52'
+2026-07-21 13:21:38,754 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:38,756 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:21:39,096 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:21:39,098 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id '44fca5be-d965-f949-dea2-8d304da7e656'
+2026-07-21 13:22:37,633 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:22:37,635 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:22:38,042 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:22:38,044 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id 'e336e20a-1e46-1337-46e7-75376a953ed4'
+2026-07-21 13:22:42,036 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:22:42,041 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:22:42,458 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2026-07-21 13:22:42,463 - routers.chat - ERROR - Error in chat endpoint: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+Traceback (most recent call last):
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/routers/chat.py", line 66, in event_generator
+    async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
+    ...<10 lines>...
+                yield f"data: {json.dumps({'reply': final_reply})}\n\n"
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/main.py", line 3440, in astream
+    async for _ in runner.atick(
+    ...<16 lines>...
+            yield o
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_runner.py", line 396, in atick
+    await arun_with_retry(
+    ...<15 lines>...
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/pregel/_retry.py", line 744, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 733, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        step.ainvoke(input, config, **kwargs), context=context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py", line 501, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 707, in run_in_executor
+    return await asyncio.get_running_loop().run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/langchain_core/runnables/config.py", line 698, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/agents/nodes.py", line 192, in general_node
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=openai_msgs,
+        temperature=0.7
+    )
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/resources/chat/completions/completions.py", line 1281, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<53 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Coding/Projects/AlgoCoach-AI/backend/venv/lib/python3.14/site-packages/openai/_base_client.py", line 1105, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-proj-********************************************************************************************************************************************************GXkA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+During task with name 'general' and id '6aa413d4-44c0-fd33-0708-3c96660a9159'
+2026-07-21 13:23:56,422 - main - INFO - Shutting down AlgoCoach AI Backend
+2026-07-21 13:24:03,104 - main - INFO - Starting up AlgoCoach AI Backend
+2026-07-21 13:24:47,066 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:24:47,077 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:24:48,500 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:24:48,504 - agents.nodes - INFO - general_node handled chat with LLM latency 1.42s
+2026-07-21 13:25:19,499 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:25:19,502 - agents.nodes - INFO - supervisor_node routed to: general_chat
+2026-07-21 13:25:21,261 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:25:21,263 - agents.nodes - INFO - general_node handled chat with LLM latency 1.76s
+2026-07-21 13:26:04,622 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:26:04,628 - agents.nodes - INFO - review_node completed review with LLM latency 5.29s
+2026-07-21 13:26:33,075 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-21 13:26:33,079 - agents.nodes - INFO - review_node completed review with LLM latency 6.24s
+2026-07-24 15:12:30,710 - main - INFO - Starting up AlgoCoach AI Backend
+2026-08-14 10:31:31,529 - main - INFO - Starting up AlgoCoach AI Backend
+2026-08-14 10:32:13,130 - main - INFO - Shutting down AlgoCoach AI Backend
+2026-08-14 10:32:18,203 - main - INFO - Starting up AlgoCoach AI Backend
+2026-08-14 10:33:47,803 - main - INFO - Shutting down AlgoCoach AI Backend
+2026-08-14 10:33:52,831 - main - INFO - Starting up AlgoCoach AI Backend
+2026-08-16 18:38:05,671 - main - INFO - Shutting down AlgoCoach AI Backend

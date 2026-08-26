@@ -13,7 +13,8 @@ export default function ProgressPage() {
   useEffect(() => {
     const fetchProgress = async () => {
       try {
-        const res = await fetch("http://localhost:8000/progress/summary", {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const res = await fetch(`${backendUrl}/progress/summary`, {
           credentials: "include",
         });
         

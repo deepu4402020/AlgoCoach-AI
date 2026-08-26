@@ -33,7 +33,8 @@ export default function ChatPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8000/auth/logout", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      await fetch(`${backendUrl}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

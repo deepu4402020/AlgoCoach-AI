@@ -15,7 +15,8 @@ export default function SignupPage() {
     setError("");
     
     try {
-      const res = await fetch("http://localhost:8000/auth/signup", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

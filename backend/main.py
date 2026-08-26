@@ -5,6 +5,10 @@ from contextlib import asynccontextmanager
 from database import engine, Base
 import models
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 logging.basicConfig(
     filename='app.log',

@@ -3,6 +3,9 @@ node_modules/
 .env.local
 Read.Md
 backend/venv/
-backend/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 backend/chroma_db/
 .DS_Store
