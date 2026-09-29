@@ -10,41 +10,39 @@ router = APIRouter(prefix="/progress", tags=["progress"])
 
 @router.get("/summary")
 async def get_summary(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    # total problems attempted
-    result = await db.execute(select(func.count(ProblemAttempt.id)).where(ProblemAttempt.user_id == current_user.id))
-    total_attempts = result.scalar() or 0
+    from sqlalchemy import case
     
-    # breakdown by pattern
-    result = await db.execute(
-        select(ProblemAttempt.pattern_tag, func.count(ProblemAttempt.id))
+    # 1. Single efficient query for all aggregations
+    query = (
+        select(
+            ProblemAttempt.pattern_tag,
+            func.count(ProblemAttempt.id).label("attempts"),
+            func.sum(case((ProblemAttempt.outcome == "solved", 1), else_=0)).label("solved")
+        )
         .where(ProblemAttempt.user_id == current_user.id)
         .group_by(ProblemAttempt.pattern_tag)
     )
-    attempts_by_pattern = result.fetchall()
     
-    # breakdown of solved by pattern
-    result = await db.execute(
-        select(ProblemAttempt.pattern_tag, func.count(ProblemAttempt.id))
-        .where(ProblemAttempt.user_id == current_user.id, ProblemAttempt.outcome == "solved")
-        .group_by(ProblemAttempt.pattern_tag)
-    )
-    solved_by_pattern = result.fetchall()
+    result = await db.execute(query)
+    rows = result.fetchall()
     
-    solved_dict = {row[0]: row[1] for row in solved_by_pattern}
-    
+    total_attempts = sum(row.attempts for row in rows)
     pattern_breakdown = []
     weak_patterns = []
-    for pattern, attempts in attempts_by_pattern:
-        if not pattern:
+    
+    for row in rows:
+        if not row.pattern_tag:
             continue
-        solved = solved_dict.get(pattern, 0)
+            
+        solved_count = row.solved or 0
         pattern_breakdown.append({
-            "pattern": pattern,
-            "attempts": attempts,
-            "solved": solved
+            "pattern": row.pattern_tag,
+            "attempts": row.attempts,
+            "solved": solved_count
         })
-        if attempts > 0 and (solved / attempts) < 0.5:
-            weak_patterns.append(pattern)
+        
+        if row.attempts > 0 and (solved_count / row.attempts) < 0.5:
+            weak_patterns.append(row.pattern_tag)
             
     return {
         "total_attempts": total_attempts,
