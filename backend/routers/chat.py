@@ -11,6 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import json
 import uuid
 import logging
+from fastapi import BackgroundTasks
+from services.llm import get_openai_client
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,7 @@ class ChatResponse(BaseModel):
     error: Optional[str] = None
 
 # A simple helper to guess pattern from text
+# #F
 def infer_pattern(text: str) -> str:
     text = text.lower()
     patterns = {
@@ -50,35 +54,72 @@ def infer_pattern(text: str) -> str:
             return val
     return "unknown"
 
+async def update_user_learning_profile(user_id: str, message: str, reply: str, db: AsyncSession):
+    try:
+        result = await db.execute(select(User).filter(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            return
+        
+        current_profile = getattr(user, "learning_profile", "No specific patterns identified yet.")
+        
+        client = get_openai_client()
+        prompt = f"""You are analyzing a student's learning progress. 
+Current Profile: {current_profile}
+Latest Interaction:
+Student: {message}
+Coach: {reply}
+
+Update the student's learning profile to reflect any new patterns they struggle with or have mastered. Keep it concise, under 3 sentences. If no update is needed, output the Current Profile exactly."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.0
+        )
+        new_profile = response.choices[0].message.content.strip()
+        user.learning_profile = new_profile
+        await db.commit()
+    except Exception as e:
+        logger.error(f"Failed to update profile: {e}")
+
 @router.post("/chat")
-async def chat_endpoint(request: ChatRequest, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def chat_endpoint(request: ChatRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     global LAST_ROUTE
     
     config = {"configurable": {"thread_id": current_user.id}, "recursion_limit": 5}
     input_message = HumanMessage(content=request.message)
+    learning_profile = getattr(current_user, "learning_profile", "No specific patterns identified yet.")
     
     async def event_generator():
         final_reply = ""
-        final_state = None
         global LAST_ROUTE
+        hint_level = 0
         
         try:
-            async for event in graph_app.astream({"messages": [input_message], "user_id": current_user.id}, config, stream_mode="values"):
-                final_state = event
-                if "route" in event:
-                    LAST_ROUTE = event["route"]
-                    
-                if "messages" in event and event["messages"]:
-                    last_msg = event["messages"][-1]
-                    if isinstance(last_msg, AIMessage):
-                        final_reply = last_msg.content
-                        # Yield node-by-node update (simulating a stream of the final answer)
-                        # We send the entire reply so far. The frontend will just replace the text.
+            async for event_type, payload in graph_app.astream(
+                {"messages": [input_message], "user_id": current_user.id, "learning_profile": learning_profile},
+                config,
+                stream_mode=["messages", "updates"]
+            ):
+                if event_type == "messages":
+                    chunk, metadata = payload
+                    if chunk.content:
+                        final_reply += chunk.content
+                        # Yield accumulated text for the frontend
                         yield f"data: {json.dumps({'reply': final_reply})}\n\n"
                         
+                elif event_type == "updates":
+                    # Extract info from node outputs if needed
+                    for node_name, node_output in payload.items():
+                        if isinstance(node_output, dict):
+                            if "route" in node_output:
+                                LAST_ROUTE = node_output["route"]
+                            if "hint_level" in node_output:
+                                hint_level = node_output["hint_level"]
+                                
             # Stage 4: Log problem attempt if routed to hint or review
-            if final_state and LAST_ROUTE in ["hint_request", "code_review_request", "hint", "review"]:
-                hint_level = final_state.get("hint_level", 0)
+            if LAST_ROUTE in ["hint_request", "code_review_request", "hint", "review"]:
                 pattern_tag = infer_pattern(request.message + " " + final_reply)
                 
                 outcome = "in_progress"
@@ -94,6 +135,10 @@ async def chat_endpoint(request: ChatRequest, current_user: User = Depends(get_c
                 )
                 db.add(attempt)
                 await db.commit()
+                
+            # Trigger background task to update memory
+            if final_reply:
+                background_tasks.add_task(update_user_learning_profile, current_user.id, request.message, final_reply, db)
                 
         except Exception as e:
             logger.error(f"Error in chat endpoint: {e}", exc_info=True)

@@ -9,6 +9,7 @@ class User(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    learning_profile = Column(String, default="No specific patterns identified yet.")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Session(Base):

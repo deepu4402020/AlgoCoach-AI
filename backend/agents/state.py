@@ -15,6 +15,9 @@ class CoachState(TypedDict):
     # User session/ID
     user_id: str
     
+    # Continuous memory of user's learning profile
+    learning_profile: str
+    
     # The current problem they are working on (if any)
     current_problem: Optional[str]
     

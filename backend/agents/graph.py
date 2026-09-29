@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+import sqlite3
 
 from agents.state import CoachState
 from agents.nodes import (
@@ -54,7 +55,8 @@ def build_graph():
     workflow.add_edge("general", END)
     
     # 6. Compile the graph with a memory saver (checkpointer)
-    memory = MemorySaver()
+    conn = sqlite3.connect("./algocoach_checkpoints.db", check_same_thread=False)
+    memory = SqliteSaver(conn)
     app = workflow.compile(checkpointer=memory)
     
     return app

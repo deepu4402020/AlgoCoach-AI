@@ -1,22 +1,16 @@
-import json
 import time
 import logging
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from services.llm import get_openai_client
+from langchain_openai import ChatOpenAI
 from services.retriever import retrieve
 from agents.state import CoachState
 
 logger = logging.getLogger(__name__)
 
-def supervisor_node(state: CoachState) -> dict:
-    """
-    Decides the route based on the latest user message.
-    Routes: "concept_question", "hint_request", "code_review_request", "general_chat"
-    """
+async def supervisor_node(state: CoachState) -> dict:
     messages = state["messages"]
     last_message = messages[-1].content.lower() if messages else ""
     
-    # 1. Fast path routing (Keyword/code block detection)
     if "```" in last_message or "def " in last_message or "class " in last_message:
         return {"route": "code_review_request"}
     
@@ -26,8 +20,6 @@ def supervisor_node(state: CoachState) -> dict:
     if any(word in last_message for word in ["what is", "how does", "explain", "concept"]):
         return {"route": "concept_question"}
         
-    # 2. Fallback to LLM classification
-    client = get_openai_client()
     system_prompt = """Classify the user's message as one of the following exact labels:
 - concept_question
 - hint_request
@@ -37,71 +29,45 @@ def supervisor_node(state: CoachState) -> dict:
 Respond with ONLY the label, nothing else.
 """
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": last_message}
-            ],
-            temperature=0.0,
-            max_tokens=20
-        )
-        route = response.choices[0].message.content.strip()
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.0, max_tokens=20)
+        msgs = [SystemMessage(content=system_prompt), HumanMessage(content=last_message)]
+        response = await llm.ainvoke(msgs)
+        route = response.content.strip()
         if route not in ["concept_question", "hint_request", "code_review_request", "general_chat"]:
             route = "general_chat"
     except Exception:
-        route = "general_chat"
         route = "general_chat"
         
     logger.info(f"supervisor_node routed to: {route}")
     return {"route": route}
 
-def concept_node(state: CoachState) -> dict:
-    """Answers a conceptual question using retrieved context."""
+async def concept_node(state: CoachState) -> dict:
     messages = state["messages"]
     last_message = messages[-1].content
     
-    # Retrieve relevant context
     chunks = retrieve(last_message, k=3)
-    
-    # Generate answer
-    client = get_openai_client()
     
     system_prompt = "You are AlgoCoach, a friendly DSA tutor. Answer the student's conceptual question based ONLY on the following context. If the answer is not in the context, say you aren't sure but try to help generally.\n\nContext:\n"
     system_prompt += "\n\n".join(chunks)
+    system_prompt += f"\n\nStudent Learning Profile:\n{state.get('learning_profile', 'None')}"
     
-    # Convert state messages to openai format
-    openai_msgs = [{"role": "system", "content": system_prompt}]
-    for msg in messages:
-        if isinstance(msg, HumanMessage):
-            openai_msgs.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AIMessage):
-            openai_msgs.append({"role": "assistant", "content": msg.content})
-            
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
     start_time = time.time()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=openai_msgs,
-        temperature=0.7
-    )
-    llm_latency = time.time() - start_time
-    logger.info(f"concept_node handled question with LLM latency {llm_latency:.2f}s")
+    response = await llm.ainvoke([SystemMessage(content=system_prompt)] + messages)
+    logger.info(f"concept_node handled question with LLM latency {time.time() - start_time:.2f}s")
     
-    reply = response.choices[0].message.content
     return {
-        "messages": [AIMessage(content=reply)],
+        "messages": [response],
         "retrieved_context": chunks
     }
 
-def hint_node(state: CoachState) -> dict:
-    """Provides a scaled hint based on hint_level."""
+async def hint_node(state: CoachState) -> dict:
     messages = state["messages"]
     last_message = messages[-1].content
     current_level = state.get("hint_level", 0)
     
     chunks = retrieve(last_message, k=2)
     
-    # Determine the type of hint to give
     if current_level == 0:
         instruction = "Give a very gentle hint. Ask a clarifying question about their approach. DO NOT give away the pattern or the code."
     elif current_level == 1:
@@ -113,34 +79,20 @@ def hint_node(state: CoachState) -> dict:
         
     system_prompt = f"You are AlgoCoach, a friendly DSA tutor. The student is stuck and needs a hint. \n\nINSTRUCTION: {instruction}\n\nReference Material (if relevant):\n"
     system_prompt += "\n\n".join(chunks)
+    system_prompt += f"\n\nStudent Learning Profile:\n{state.get('learning_profile', 'None')}"
     
-    client = get_openai_client()
-    openai_msgs = [{"role": "system", "content": system_prompt}]
-    for msg in messages:
-        if isinstance(msg, HumanMessage):
-            openai_msgs.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AIMessage):
-            openai_msgs.append({"role": "assistant", "content": msg.content})
-            
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
     start_time = time.time()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=openai_msgs,
-        temperature=0.7
-    )
-    llm_latency = time.time() - start_time
-    logger.info(f"hint_node provided hint_level {current_level} with LLM latency {llm_latency:.2f}s")
-    
-    reply = response.choices[0].message.content
+    response = await llm.ainvoke([SystemMessage(content=system_prompt)] + messages)
+    logger.info(f"hint_node provided hint_level {current_level} with LLM latency {time.time() - start_time:.2f}s")
     
     return {
-        "messages": [AIMessage(content=reply)],
+        "messages": [response],
         "hint_level": current_level + 1,
         "retrieved_context": chunks
     }
 
-def review_node(state: CoachState) -> dict:
-    """Reviews the user's code."""
+async def review_node(state: CoachState) -> dict:
     messages = state["messages"]
     
     system_prompt = """You are AlgoCoach, an expert DSA reviewer. 
@@ -150,54 +102,28 @@ Review the user's code and provide feedback ONLY on:
 3. One concrete improvement.
 
 Keep it encouraging. DO NOT rewrite their entire solution for them."""
+    system_prompt += f"\n\nStudent Learning Profile:\n{state.get('learning_profile', 'None')}"
 
-    client = get_openai_client()
-    openai_msgs = [{"role": "system", "content": system_prompt}]
-    for msg in messages:
-        if isinstance(msg, HumanMessage):
-            openai_msgs.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AIMessage):
-            openai_msgs.append({"role": "assistant", "content": msg.content})
-            
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
     start_time = time.time()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=openai_msgs,
-        temperature=0.5
-    )
-    llm_latency = time.time() - start_time
-    logger.info(f"review_node completed review with LLM latency {llm_latency:.2f}s")
+    response = await llm.ainvoke([SystemMessage(content=system_prompt)] + messages)
+    logger.info(f"review_node completed review with LLM latency {time.time() - start_time:.2f}s")
     
-    reply = response.choices[0].message.content
     return {
-        "messages": [AIMessage(content=reply)],
-        "hint_level": 0 # Reset hint level since they wrote code
+        "messages": [response],
+        "hint_level": 0
     }
 
-def general_node(state: CoachState) -> dict:
-    """Handles general chit-chat without RAG."""
+async def general_node(state: CoachState) -> dict:
     messages = state["messages"]
     
-    system_prompt = "You are AlgoCoach, a friendly and encouraging DSA tutor. Respond to the user's general conversation naturally."
+    system_prompt = f"You are AlgoCoach, a friendly and encouraging DSA tutor. Respond to the user's general conversation naturally.\n\nStudent Learning Profile:\n{state.get('learning_profile', 'None')}"
     
-    client = get_openai_client()
-    openai_msgs = [{"role": "system", "content": system_prompt}]
-    for msg in messages[-5:]: # Only need recent history for general chat
-        if isinstance(msg, HumanMessage):
-            openai_msgs.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AIMessage):
-            openai_msgs.append({"role": "assistant", "content": msg.content})
-            
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
     start_time = time.time()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=openai_msgs,
-        temperature=0.7
-    )
-    llm_latency = time.time() - start_time
-    logger.info(f"general_node handled chat with LLM latency {llm_latency:.2f}s")
+    response = await llm.ainvoke([SystemMessage(content=system_prompt)] + messages[-5:])
+    logger.info(f"general_node handled chat with LLM latency {time.time() - start_time:.2f}s")
     
-    reply = response.choices[0].message.content
     return {
-        "messages": [AIMessage(content=reply)]
+        "messages": [response]
     }

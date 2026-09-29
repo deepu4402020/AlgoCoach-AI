@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.services.retriever import init_retriever, retrieve, chunk_documents
+from backend.services.llm import get_openai_client
 
 TEST_QUERIES = [
     ("How do I find the longest substring without repeating characters?", "sliding-window"),
@@ -42,17 +43,28 @@ def evaluate_retrieval(use_reranker=True):
         # But we'll just test the current setup which has the reranker.
         chunks = retrieve(query, k=5)
         
-        # Check if expected_pattern is in the metadata of the retrieved chunks
-        # Actually our chunks in retrieve() are just strings.
-        # But our ingest.py stored them with headers or content that includes the pattern name.
-        # Let's check if the expected_pattern is simply a substring of any chunk.
+        client = get_openai_client()
+        context_str = "\n".join(chunks)
         
-        found = False
-        for chunk in chunks:
-            # We assume the chunks contain the pattern name or the file name if we injected it.
-            if expected_pattern.lower() in chunk.lower() or expected_pattern.replace('-', ' ').lower() in chunk.lower():
-                found = True
-                break
+        prompt = f"""You are an expert AI evaluator judging a RAG system.
+Query: "{query}"
+Expected Concept: {expected_pattern}
+Retrieved Context:
+{context_str}
+
+Task (Context Relevance): Does the retrieved context contain sufficient information or specifically mention the expected concept to answer the query? Answer strictly YES or NO."""
+
+        try:
+            res = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_tokens=10
+            )
+            found = "YES" in res.choices[0].message.content.strip().upper()
+        except Exception as e:
+            print(f"LLM Eval error: {e}")
+            found = False
                 
         if found:
             correct += 1
@@ -60,7 +72,7 @@ def evaluate_retrieval(use_reranker=True):
             print(f"[FAIL] Query: '{query}' -> Expected: {expected_pattern}")
             
     accuracy = (correct / total) * 100
-    print(f"Retrieval@5 Accuracy: {accuracy:.2f}% ({correct}/{total})")
+    print(f"Context Relevance (LLM-Judged) Accuracy: {accuracy:.2f}% ({correct}/{total})")
 
 if __name__ == "__main__":
     evaluate_retrieval()

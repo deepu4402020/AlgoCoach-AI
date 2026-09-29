@@ -4,6 +4,7 @@ node_modules/
 Read.Md
 backend/venv/
 __pycache__/
+agents/
 *.pyc
 *.pyo
 *.pyd

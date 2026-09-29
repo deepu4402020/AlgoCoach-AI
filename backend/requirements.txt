@@ -14,3 +14,4 @@ passlib
 bcrypt
 pyjwt
 python-multipart
+langgraph-checkpoint-sqlite
