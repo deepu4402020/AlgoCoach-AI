@@ -1,36 +1,141 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, BarChart2, LogOut } from "lucide-react";
+import { Sidebar, ChatSession } from "@/components/chat/Sidebar";
+import { TopBar } from "@/components/chat/TopBar";
+import { Hero } from "@/components/chat/Hero";
+import { MessageList } from "@/components/chat/MessageList";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { ShortcutsModal } from "@/components/chat/ShortcutsModal";
+import { TopicsModal } from "@/components/chat/TopicsModal";
+import { AttachModal } from "@/components/chat/AttachModal";
 
-type Message = {
+export type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
+const CHATS_STORAGE_KEY = "algocoach_sessions_v2";
+const EMAIL_STORAGE_KEY = "algocoach_user_email";
+const THEME_STORAGE_KEY = "algocoach_theme";
+
 export default function ChatPage() {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hi! I'm AlgoCoach. What DSA problem are you working on today?",
-    },
-  ]);
+
+  // Chat State
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string>("");
 
+  // Toolbar & Preferences
+  const [hintMode, setHintMode] = useState(true);
+  const [language, setLanguage] = useState("Python");
+  const [difficulty, setDifficulty] = useState("Medium");
+  const [mode, setMode] = useState("AlgoCoach · Tutor");
+
+  // Layout & Modals
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isTopicsOpen, setIsTopicsOpen] = useState(false);
+  const [isAttachOpen, setIsAttachOpen] = useState(false);
+
+  // User details
+  const [userEmail, setUserEmail] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage on mount
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+    try {
+      // Load user email
+      const savedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
+      if (savedEmail) setUserEmail(savedEmail);
 
+      // Load theme - default to clean airy light theme
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      const shouldUseDark = savedTheme === "dark";
+      setIsDarkMode(shouldUseDark);
+      if (shouldUseDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Load past sessions
+      const raw = localStorage.getItem(CHATS_STORAGE_KEY);
+      if (raw) {
+        const parsed: ChatSession[] = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore local storage state", e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  // Save sessions to localStorage
+  const saveSessions = useCallback((updated: ChatSession[]) => {
+    setSessions(updated);
+    try {
+      localStorage.setItem(CHATS_STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error("Failed to save sessions to localStorage", e);
+    }
+  }, []);
+
+  // Toggle Dark Mode
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem(THEME_STORAGE_KEY, "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem(THEME_STORAGE_KEY, "light");
+      }
+      return next;
+    });
+  };
+
+  // Switch / Select Session
+  const handleSelectSession = (id: string) => {
+    const s = sessions.find((item) => item.id === id);
+    if (s) {
+      setActiveSessionId(s.id);
+      setMessages(s.messages || []);
+      setStreamError(null);
+    }
+  };
+
+  // Start New Chat
+  const handleNewChat = () => {
+    setActiveSessionId(null);
+    setMessages([]);
+    setInput("");
+    setStreamError(null);
+  };
+
+  // Delete Session
+  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = sessions.filter((s) => s.id !== id);
+    saveSessions(updated);
+    if (activeSessionId === id) {
+      handleNewChat();
+    }
+  };
+
+  // Logout handler (unchanged backend endpoint)
   const handleLogout = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -38,25 +143,71 @@ export default function ChatPage() {
         method: "POST",
         credentials: "include",
       });
+      localStorage.removeItem(EMAIL_STORAGE_KEY);
       router.push("/login");
     } catch (e) {
-      console.error(e);
+      console.error("Logout failed", e);
+      router.push("/login");
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  // Export current chat to Markdown
+  const handleExportChat = () => {
+    if (messages.length === 0) return;
+    const dateStr = new Date().toLocaleDateString();
+    let md = `# AlgoCoach AI Practice Session - ${dateStr}\n\n`;
+    messages.forEach((m) => {
+      md += `### ${m.role === "user" ? "User" : "AlgoCoach"}:\n${m.content}\n\n---\n\n`;
+    });
 
-    const userMessage = input.trim();
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `algocoach-session-${Date.now()}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Send message & stream response
+  const sendMessage = async (overrideMessage?: string) => {
+    const userMessage = (overrideMessage || input).trim();
+    if (!userMessage || isLoading) return;
+
     setInput("");
-    
-    // Add user message to UI
+    setStreamError(null);
+    setLastUserMessage(userMessage);
+
+    // Contextual instruction suffix for hint mode if active
+    let promptToSend = userMessage;
+    if (hintMode && !userMessage.toLowerCase().includes("hint")) {
+      promptToSend = `${userMessage} (Preferred language: ${language}. Please guide me with pedagogical hints first without revealing full code.)`;
+    }
+
     const newMessages: Message[] = [
       ...messages,
       { role: "user", content: userMessage },
     ];
     setMessages(newMessages);
     setIsLoading(true);
+
+    // Identify or generate current session
+    let currentId = activeSessionId;
+    let currentSessions = [...sessions];
+
+    if (!currentId) {
+      currentId = `session-${Date.now()}`;
+      setActiveSessionId(currentId);
+      const title = userMessage.length > 36 ? userMessage.slice(0, 36) + "..." : userMessage;
+      const newSession: ChatSession = {
+        id: currentId,
+        title,
+        createdAt: Date.now(),
+        messages: newMessages,
+      };
+      currentSessions = [newSession, ...currentSessions];
+      saveSessions(currentSessions);
+    }
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -66,154 +217,229 @@ export default function ChatPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userMessage,
+          message: promptToSend,
           history: messages,
         }),
         credentials: "include",
       });
 
       if (response.status === 401) {
-        // Unauthorized, redirect to login
         router.push("/login");
         return;
       }
 
-      if (!response.body) return;
+      if (!response.body) {
+        throw new Error("No response body received from server");
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let isFirstChunk = true;
+      let accumulatedReply = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        
+        const lines = chunk.split("\n");
+
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             const dataStr = line.slice(6).trim();
             if (!dataStr) continue;
-            
+
             try {
               const data = JSON.parse(dataStr);
               if (isFirstChunk) {
                 setIsLoading(false);
                 isFirstChunk = false;
+
                 if (data.error) {
-                    setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${data.error}` }]);
+                  setStreamError(data.error);
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: "assistant", content: `Error: ${data.error}` },
+                  ]);
                 } else if (data.reply !== undefined) {
-                    setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+                  accumulatedReply = data.reply;
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: "assistant", content: data.reply },
+                  ]);
                 }
               } else {
                 if (data.error) {
-                    setMessages((prev) => {
-                        const updated = [...prev];
-                        updated[updated.length - 1].content = `Error: ${data.error}`;
-                        return updated;
-                    });
+                  setStreamError(data.error);
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1].content = `Error: ${data.error}`;
+                    return updated;
+                  });
                 } else if (data.reply !== undefined) {
-                    setMessages((prev) => {
-                        const updated = [...prev];
-                        updated[updated.length - 1].content = data.reply;
-                        return updated;
-                    });
+                  accumulatedReply = data.reply;
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1].content = data.reply;
+                    return updated;
+                  });
                 }
               }
-            } catch (e) {
-                console.error("Error parsing chunk", e);
+            } catch (err) {
+              console.error("Error parsing SSE JSON chunk", err);
             }
           }
         }
       }
-    } catch (error) {
-      console.error("Error communicating with AlgoCoach:", error);
+
+      // Update session in localStorage with final conversation
+      if (currentId) {
+        const finalMessages: Message[] = [
+          ...newMessages,
+          { role: "assistant", content: accumulatedReply },
+        ];
+        const updated = currentSessions.map((s) =>
+          s.id === currentId ? { ...s, messages: finalMessages } : s
+        );
+        saveSessions(updated);
+      }
+    } catch (err: any) {
+      console.error("Error communicating with AlgoCoach backend:", err);
+      const errMsg = "Oops! Could not connect to the AlgoCoach server. Please check your connection.";
+      setStreamError(errMsg);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Oops! Could not connect to the backend server." },
+        { role: "assistant", content: errMsg },
       ]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const isHeroState = messages.length === 0;
+
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto p-4 md:p-8">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">AlgoCoach AI</h1>
-          <p className="text-muted-foreground mt-1">Your friendly DSA tutor</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/progress")}>
-            <BarChart2 className="w-4 h-4 mr-2" /> Progress
-          </Button>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" /> Logout
-          </Button>
-        </div>
-      </header>
+    <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFB] dark:bg-[#0C0C10] text-[#0B0B0F] dark:text-[#F4F4F8]">
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        isCollapsed={isSidebarCollapsed}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={handleSelectSession}
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+        onLogout={handleLogout}
+        userEmail={userEmail}
+        isLoadingHistory={!isLoaded}
+        onOpenTopics={() => setIsTopicsOpen(true)}
+      />
 
-      <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border shadow-sm">
-        <ScrollArea className="flex-1 p-4 h-full">
-          <div className="space-y-4">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex w-full ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-muted text-foreground rounded-tl-sm"
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start w-full">
-                <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-muted text-foreground rounded-tl-sm flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">AlgoCoach is thinking...</span>
-                </div>
-              </div>
-            )}
-            <div ref={scrollRef} />
-          </div>
-        </ScrollArea>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        {/* Top Bar */}
+        <TopBar
+          onToggleSidebar={() => {
+            if (window.innerWidth < 768) {
+              setIsSidebarOpen(!isSidebarOpen);
+            } else {
+              setIsSidebarCollapsed(!isSidebarCollapsed);
+            }
+          }}
+          isSidebarCollapsed={isSidebarCollapsed}
+          mode={mode}
+          setMode={setMode}
+          onExportChat={handleExportChat}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
 
-        <div className="p-4 bg-background border-t">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about a problem or algorithm..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading || !input.trim()}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              <span className="sr-only">Send</span>
-            </Button>
-          </form>
-        </div>
-      </Card>
+        {/* Center Main Stage */}
+        <main className="flex-1 flex flex-col overflow-hidden relative">
+          {isHeroState ? (
+            /* Empty State Hero */
+            <div className="flex-1 overflow-y-auto">
+              <Hero
+                username={userEmail ? userEmail.split("@")[0] : "Learner"}
+                input={input}
+                setInput={setInput}
+                onSend={sendMessage}
+                isLoading={isLoading}
+                hintMode={hintMode}
+                setHintMode={setHintMode}
+                language={language}
+                setLanguage={setLanguage}
+                difficulty={difficulty}
+                setDifficulty={setDifficulty}
+                onOpenSavedPrompts={() => setIsTopicsOpen(true)}
+                onAttachFile={() => setIsAttachOpen(true)}
+              />
+            </div>
+          ) : (
+            /* Chat Messages + Pinned Bottom Input */
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+              <MessageList
+                messages={messages}
+                isLoading={isLoading}
+                error={streamError}
+                onRetry={() => {
+                  if (lastUserMessage) sendMessage(lastUserMessage);
+                }}
+              />
+
+              {/* Pinned Bottom Input Bar */}
+              <div className="sticky bottom-0 z-20 w-full px-4 pb-4 pt-2 bg-gradient-to-t from-[#FAFAFB] via-[#FAFAFB]/95 to-transparent dark:from-[#0C0C10] dark:via-[#0C0C10]/95">
+                <ChatInput
+                  variant="compact"
+                  input={input}
+                  setInput={setInput}
+                  onSend={sendMessage}
+                  isLoading={isLoading}
+                  hintMode={hintMode}
+                  setHintMode={setHintMode}
+                  language={language}
+                  setLanguage={setLanguage}
+                  difficulty={difficulty}
+                  setDifficulty={setDifficulty}
+                  onOpenSavedPrompts={() => setIsTopicsOpen(true)}
+                  onAttachFile={() => setIsAttachOpen(true)}
+                />
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Floating Help / Shortcuts Button */}
+        <ShortcutsModal
+          isOpen={isShortcutsOpen}
+          onClose={() => setIsShortcutsOpen(false)}
+          onOpen={() => setIsShortcutsOpen(true)}
+        />
+
+        {/* Topics & Saved Prompts Modal */}
+        <TopicsModal
+          isOpen={isTopicsOpen}
+          onClose={() => setIsTopicsOpen(false)}
+          onSelectPrompt={(prompt) => {
+            if (isHeroState) {
+              sendMessage(prompt);
+            } else {
+              setInput(prompt);
+            }
+          }}
+        />
+
+        {/* Attach Code Snippet Modal */}
+        <AttachModal
+          isOpen={isAttachOpen}
+          onClose={() => setIsAttachOpen(false)}
+          onAttach={(code) => {
+            setInput((prev) => (prev ? `${prev}\n\n${code}` : code));
+          }}
+        />
+      </div>
     </div>
   );
 }

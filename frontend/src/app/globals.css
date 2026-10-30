@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAFAFB;
+  --foreground: #0B0B0F;
+  --sidebar-bg: #F7F7F9;
+  --sidebar-border: #ECECF1;
+  --card-bg: #FFFFFF;
+  --card-border: #ECECF1;
+  --text-primary: #0B0B0F;
+  --text-secondary: #6B6B76;
+  --text-muted: #A0A0AB;
+  --accent-purple: #8B5CF6;
+  --accent-purple-light: #A78BFA;
+  --accent-tint: #F3EFFF;
+  --accent-tint-border: #E4DBFF;
+  --btn-primary-bg: #0B0B0F;
+  --btn-primary-fg: #FFFFFF;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0C0C10;
+  --foreground: #F4F4F8;
+  --sidebar-bg: #131318;
+  --sidebar-border: #23232F;
+  --card-bg: #171720;
+  --card-border: #252533;
+  --text-primary: #F4F4F8;
+  --text-secondary: #9E9EB0;
+  --text-muted: #6E6E7F;
+  --accent-purple: #A78BFA;
+  --accent-purple-light: #C084FC;
+  --accent-tint: #231B38;
+  --accent-tint-border: #3D3063;
+  --btn-primary-bg: #F4F4F8;
+  --btn-primary-fg: #0B0B0F;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    filter: drop-shadow(0 15px 35px rgba(139, 92, 246, 0.35));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.05);
+    filter: drop-shadow(0 25px 45px rgba(167, 139, 250, 0.45));
+  }
+}
+
+.animate-orb {
+  animation: orbPulse 5s ease-in-out infinite;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 171, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+@custom-variant dark (&:where(.dark, .dark *));
